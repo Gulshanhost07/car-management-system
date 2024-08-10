@@ -1,9 +1,9 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-module.exports = async (req, res) => {
-    const filePath = path.join(__dirname, '../cars.json');
-    const jsonData = fs.readFileSync(filePath, 'utf-8');
+export default function handler(req, res) {
+    const filePath = path.join(process.cwd(), 'cars.json');
+    const jsonData = fs.readFileSync(filePath);
     const cars = JSON.parse(jsonData);
     res.status(200).json(cars);
-};
+}
