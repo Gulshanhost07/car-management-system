@@ -3,135 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Assignment for Quadiro Technologies</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Car Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="text-center">Admin Dashboard</h1>
-        <div class="mb-3">
-            <button id="addCarButton" class="btn btn-success">Add New Car</button>
-        </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Car Name</th>
-                    <th>Manufacturing Year</th>
-                    <th>Price</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="carList">
-                <!-- Car records will be populated here -->
-            </tbody>
-        </table>
+    <h1>Car Management System</h1>
+
+    <!-- Add Car Form -->
+    <div class="container">
+        <h2>Add Car</h2>
+        <form id="addCarForm">
+            <div class="form-group">
+                <label for="carName">Car Name:</label>
+                <input type="text" id="carName" class="form-control" placeholder="Car Name" required>
+            </div>
+            <div class="form-group">
+                <label for="year">Year:</label>
+                <input type="number" id="year" class="form-control" placeholder="Year" required>
+            </div>
+            <div class="form-group">
+                <label for="price">Price:</label>
+                <input type="number" id="price" class="form-control" placeholder="Price" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Car</button>
+        </form>
     </div>
-    <script>document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm');
-    const carList = document.getElementById('carList');
-    const addCarButton = document.getElementById('addCarButton');
 
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+    <!-- Delete Car Form -->
+    <div class="container mt-5">
+        <h2>Delete Car</h2>
+        <div class="form-group">
+            <label for="carId">Car ID:</label>
+            <input type="text" id="carId" class="form-control" placeholder="Car ID" required>
+        </div>
+        <button id="deleteCarButton" class="btn btn-danger">Delete Car</button>
+    </div>
 
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add Car Function
+            document.getElementById('addCarForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const carName = document.getElementById('carName').value;
+                const year = document.getElementById('year').value;
+                const price = document.getElementById('price').value;
+
+                fetch('/api/addCar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ carName, year, price })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Car added successfully:', data);
+                    alert('Car added successfully!');
+                    document.getElementById('addCarForm').reset();
+                })
+                .catch(error => {
+                    console.error('Error adding car:', error);
+                    alert('Error adding car!');
+                });
             });
 
-            const result = await response.json();
+            // Delete Car Function
+            document.getElementById('deleteCarButton').addEventListener('click', function() {
+                const carId = document.getElementById('carId').value;
 
-            if (result.success) {
-                if (result.role === "admin") {
-                    window.location.href = '/admin.html';
-                } else {
-                    window.location.href = '/user.html';
-                }
-            } else {
-                alert('Invalid credentials');
-            }
-        });
-    }
-
-    if (carList) {
-        fetchCars();
-    }
-
-    if (addCarButton) {
-        addCarButton.addEventListener('click', async () => {
-            const car_name = prompt("Enter car name:");
-            const manufacturing_year = prompt("Enter manufacturing year:");
-            const price = prompt("Enter price:");
-
-            const response = await fetch('/api/addCar', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ car_name, manufacturing_year, price }),
+                fetch('/api/deleteCar', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ carId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Car deleted successfully:', data);
+                    alert('Car deleted successfully!');
+                    document.getElementById('carId').value = '';
+                })
+                .catch(error => {
+                    console.error('Error deleting car:', error);
+                    alert('Error deleting car!');
+                });
             });
-
-            if (response.ok) {
-                fetchCars();
-            }
         });
-    }
-
-    async function fetchCars() {
-        const response = await fetch('/api/getCars');
-        const cars = await response.json();
-        carList.innerHTML = cars.map(car => `
-            <tr>
-                <td>${car.id}</td>
-                <td>${car.car_name}</td>
-                <td>${car.manufacturing_year}</td>
-                <td>${car.price}</td>
-                <td>
-                    <button class="btn btn-warning" onclick="editCar(${car.id})">Edit</button>
-                    <button class="btn btn-danger" onclick="deleteCar(${car.id})">Delete</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    window.editCar = async function(id) {
-        const car_name = prompt("Enter new car name:");
-        const manufacturing_year = prompt("Enter new manufacturing year:");
-        const price = prompt("Enter new price:");
-
-        const response = await fetch('/api/updateCar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id, car_name, manufacturing_year, price }),
-        });
-
-        if (response.ok) {
-            fetchCars();
-        }
-    };
-
-    window.deleteCar = async function(id) {
-        const response = await fetch('/api/deleteCar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ id }),
-        });
-
-        if (response.ok) {
-            fetchCars();
-        }
-    };
-});</script>
+    </script>
 </body>
 </html>
